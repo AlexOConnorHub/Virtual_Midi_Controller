@@ -1,94 +1,241 @@
+from json import loads
 import tkinter as tk
 import midi
 import mido
 import helper
 
-# Create gui clas
-class gui():
-    # constructor
+class gui:
+    """When initialized, this class will create a window for the user to interact with.
+    """
     def __init__(this):
+        this.midi = midi.midi()
         this.root = tk.Tk()
-        this.root.title(helper.getString("Virtual Midi Controller"))
-        
+
+        # Right click on control edit popup
+        this.editPopup = tk.Toplevel(this.root)
+        this.editPopup.protocol("WM_DELETE_WINDOW", this.editPopup.withdraw)
+        this.editPopup.withdraw()
+        this.editChannelLabel = tk.Entry(this.editPopup)
+        this.editChannelLabel.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        this.editChannelLabelLabel = tk.Label(this.editPopup)
+        this.editChannelLabelLabel.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        this.editDropdownVar = tk.StringVar(this.editPopup)
+        this.editDropdown = tk.OptionMenu(this.editPopup, this.editDropdownVar, *[key.capitalize() for key in midi.TYPES.keys()], command=this.dropdownCallbackEdit)
+        this.editDropdown.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        this.editDropdownLabel = tk.Label(this.editPopup)
+        this.editDropdownLabel.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
+        this.editInputs = []
+        this.editInputLabels = []
+
+        # Preferences popup
+        this.preferencesPopup = tk.Toplevel(this.root)
+        this.preferencesPopup.protocol("WM_DELETE_WINDOW", this.preferencesPopup.withdraw)
+        this.preferencesPopup.withdraw()
+        this.languageDropdownVar = tk.StringVar(this.preferencesPopup)
+        this.languageDropdownVar.set(helper.getSetting("language"))
+        this.languages = loads(open("translation.json", "r").read())["supported_languages"]
+        this.preferencesLanguageDropdown = tk.OptionMenu(this.preferencesPopup, this.languageDropdownVar, *list(this.languages.keys()), command=this.dropdownCallbackSetting)
+        this.preferencesLanguageDropdown.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        this.preferencesLanguageLabel = tk.Label(this.preferencesPopup)
+        this.preferencesLanguageLabel.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        this.preferencesRowCountStepper = tk.Spinbox(this.preferencesPopup, from_=1, to=10, command=this.rowSpinnerCallback)
+        this.preferencesRowCountStepper.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
+        this.preferencesRowCountStepper.bind("<Key>", lambda e: "break")
+        this.preferencesRowCountStepper.delete(0, tk.END)
+        this.preferencesRowCountStepper.insert(0, helper.getSetting("rowCount"))
+        this.preferencesRowCountLabel = tk.Label(this.preferencesPopup)
+        this.preferencesRowCountLabel.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        this.preferencesColumnCountStepper = tk.Spinbox(this.preferencesPopup, from_=1, to=10, command=this.columnSpinnerCallback)
+        this.preferencesColumnCountStepper.grid(row=2, column=1, sticky="nsew", padx=5, pady=5)
+        this.preferencesColumnCountStepper.bind("<Key>", lambda e: "break")
+        this.preferencesColumnCountStepper.delete(0, tk.END)
+        this.preferencesColumnCountStepper.insert(0, helper.getSetting("columnCount"))
+        this.preferencesColumnCountLabel = tk.Label(this.preferencesPopup)
+        this.preferencesColumnCountLabel.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
+
         # Create top menu bar
         this.optionBar = tk.Menu(this.root)
         this.editMenu = tk.Menu(this.optionBar, tearoff=0)
-        this.editMenu.add_command(label="Undo")
-        this.editMenu.add_command(label="Redo")
-        this.optionBar.add_cascade(label="Edit", menu=this.editMenu)
+        this.editMenu.add_command(command=this.preferencesPopup.deiconify)
+        this.editMenu.add_command(command=this.root.quit)
+        this.optionBar.add_cascade(menu=this.editMenu)
         this.root.config(menu=this.optionBar)
 
         # Create main frame
+        this.setGlobalStrings()
         this.mainFrame = tk.Frame(this.root)
         this.mainFrame.pack(fill=tk.BOTH, expand=True)
-        
-        # Add 3 x 4 button grid
-        for i in range(3):
-            for j in range(4):
-                this.button = tk.Button(this.mainFrame, text=f"Key {this.convertButtonNumberToKey(i*4+j)}", command=lambda i=i, j=j: this.buttonPress(i*4+j))
-                this.button.grid(row=i, column=j, sticky="nsew")
-
-        this.midi = midi.midi()
-
+        this.buttons = []
+        this.renderMainWindow()
         this.root.mainloop()
+        
+    def setGlobalStrings(this) -> None:
+        """Sets all the strings in the gui to the current language
+        """
+        this.root.title(helper.getString("Virtual Midi Controller"))
+        this.editPopup.title(helper.getString("Edit Midi Message"))
+        this.preferencesPopup.title(helper.getString("Preferences"))
+        this.editChannelLabelLabel.config(text=helper.getString("Channel Name"))
+        this.editDropdownLabel.config(text=helper.getString("Type of Midi Message"))
+        this.preferencesLanguageLabel.config(text=helper.getString("Prefered Language"))
+        this.preferencesRowCountLabel.config(text=helper.getString("Row Count"))
+        this.preferencesColumnCountLabel.config(text=helper.getString("Column Count"))
+        this.editMenu.entryconfig(0, label = helper.getString("Preferences"))
+        this.editMenu.entryconfig(1, label = helper.getString("Quit"))
+        this.optionBar.entryconfig(1, label = helper.getString("Window"))
+
+    def renderMainWindow(this) -> None:
+        """Renders the main window.
+        """
+        # For each this.buttons, delete it
+        for button in this.buttons:
+            button.destroy()
+        this.buttons = []
+        row = helper.getSetting("rowCount")
+        col = helper.getSetting("columnCount")
+        for i in range(row):
+            for j in range(col):
+                buttonId = len(this.buttons)
+                this.buttons.append(tk.Button(this.mainFrame, text=this.getButtonText(buttonId), command=lambda button=buttonId: this.buttonPress(button), height=5, width=10))
+                this.buttons[-1].grid(row=i, column=j, sticky="nsew", padx=5, pady=5)
+                this.buttons[-1].bind("<Button-3>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
 
     def buttonPress(this, button: int):
-        message = mido.Message("control_change", control=7, value=this.convertButtonNumberToMidiValue(button))
+        """Function called when a button is pressed.
+
+        Args:
+            button (int): Button ID
+        """
+        message = this.midi.getButtonMessage(button)
+        if (message is None):
+            return
+        print(f"Sending message: {message} from button {this.getButtonText(button)}")
         this.midi.send(message)
-        print(f"Sending message: {message} from button {this.convertButtonNumberToKey(button)}")
+
+    def getButtonText(this, button: int) -> str:
+        """Gets the text for the button.
+
+        Args:
+            button (int): Button ID
+
+        Returns:
+            str: Text for the button
+        """
+        text = helper.getSetting("buttons")
+        if ( text is None or len(text) <= button):
+            text = str(button + 1)
+            this.setButtonText(button, text)
+            text = helper.getSetting("buttons")
+        return text[button]["label"]
+
+    def setButtonText(this, button: int, text: str) -> None:
+        """Handles setting the text for a button.
+
+        Args:
+            button (int): Button ID
+            text (str): Text for the button
+        """
+        buttonSettings = helper.getSetting("buttons")
+        if (buttonSettings is None):
+            buttonSettings = []
+        while (len(buttonSettings) <= button):
+            buttonSettings.append({"label": str(button + 1), "command": {"type": "control_change", "channel": 0, "control": 0, "value": 127}})
+        buttonSettings[button]["label"] = text
+        if (button < len(this.buttons)):
+            btnToChange = this.buttons[button]
+            btnToChange.config(text=text)
+        helper.setSetting("buttons", buttonSettings)
+
+    def eventRightClickMenu(this, e, button: int) -> None:
+        """Handles right click menu.
+
+        Args:
+            button (int): Button ID
+        """
+        this.editingButton = button
+        this.editChannelLabel.delete(0, tk.END)
+        this.editChannelLabel.insert(0, this.getButtonText(button))
+        currMidi = this.midi.getButtonMessage(button)
+        if (currMidi is None):
+            this.dropdownCallbackEdit("")
+        else:
+            this.editDropdownVar.set(currMidi.type)
+            this.dropdownCallbackEdit(currMidi.type)
+        this.editPopup.deiconify()
+
+    def dropdownCallbackEdit(this, value):
+        """Handles dropdown menu.
+
+        Args:
+            value (str): Value of the dropdown menu
+        """
+        for editInput in this.editInputs:
+            editInput.destroy()
+        for editInputLabel in this.editInputLabels:
+            editInputLabel.destroy()
+        this.editInputs = []
+        this.editInputLabels = []
+        currMidi = this.midi.getButtonMessage(this.editingButton)
+        inputs = midi.TYPES.get(value.lower(), [])
+        nextRow = 2 # Rows 0 and 1 are always used
+        for input in inputs:
+            this.editInputs.append(tk.Spinbox(this.editPopup, from_=(1 if input == "channel" else 0), to=(16 if input == "channel" else 127)))
+            this.editInputs[-1].grid(row=nextRow, column=0, sticky="nsew", padx=5, pady=5)
+            if (currMidi is not None):
+                data = getattr(currMidi, input, 0)
+                if (input == "channel"):
+                    data += 1
+                this.editInputs[-1].delete(0, tk.END)
+                this.editInputs[-1].insert(0, data)
+            # this.editInputs[-1].bind("<Key>", lambda e: "break") # This disables keyboard input on the spinbox
+            this.editInputLabels.append(tk.Label(this.editPopup, text=helper.getString(input.capitalize())))
+            this.editInputLabels[-1].grid(row=nextRow, column=1, sticky="nsew", padx=5, pady=5)
+            nextRow += 1
+        # Add save and cancel buttons
+        this.editInputs.append(tk.Button(this.editPopup, text=helper.getString("Save"), command=this.saveEdit))
+        this.editInputs[-1].grid(row=nextRow, column=0, sticky="nsew", padx=5, pady=5)
+        this.editInputs.append(tk.Button(this.editPopup, text=helper.getString("Cancel"), command=this.editPopup.withdraw))
+        this.editInputs[-1].grid(row=nextRow, column=1, sticky="nsew", padx=5, pady=5)
+
+    def dropdownCallbackSetting(this, value):
+        """Handles dropdown menu.
+
+        Args:
+            value (str): Value of the dropdown menu
+        """
+        helper.setSetting("language", value)
+        this.setGlobalStrings()
         
-    def convertButtonNumberToKey(this, button: int) -> int:
-        if (button == 0):
-            return "C"
-        elif (button == 1):
-            return "C#"
-        elif (button == 2):
-            return "D"
-        elif (button == 3):
-            return "D#"
-        elif (button == 4):
-            return "E"
-        elif (button == 5):
-            return "F"
-        elif (button == 6):
-            return "F#"
-        elif (button == 7):
-            return "G"
-        elif (button == 8):
-            return "G#"
-        elif (button == 9):
-            return "A"
-        elif (button == 10):
-            return "A#"
-        elif (button == 11):
-            return "B"
+    def columnSpinnerCallback(this):
+        """Handles column spinner.
+        """
+        helper.setSetting("columnCount", int(this.preferencesColumnCountStepper.get()))
+        this.renderMainWindow()
+    
+    def rowSpinnerCallback(this):
+        """Handles row spinner.
+        """
+        helper.setSetting("rowCount", int(this.preferencesRowCountStepper.get()))
+        this.renderMainWindow()
         
-    def convertButtonNumberToMidiValue(this, button: int) -> int:
-        if (button == 0):
-            return 0
-        elif (button == 1):
-            return 10
-        elif (button == 2):
-            return 20
-        elif (button == 3):
-            return 30
-        elif (button == 4):
-            return 40
-        elif (button == 5):
-            return 50
-        elif (button == 6):
-            return 60
-        elif (button == 7):
-            return 70
-        elif (button == 8):
-            return 80
-        elif (button == 9):
-            return 90
-        elif (button == 10):
-            return 100
-        elif (button == 11):
-            return 110
-        
+    def saveEdit(this):
+        """Saves the edit.
+        """
+        saveName = this.editChannelLabel.get()
+        this.setButtonText(this.editingButton, saveName)
+        midoType = this.editDropdownVar.get().lower()
+        dataPointLabels = midi.TYPES.get(midoType, [])
+        if (len(dataPointLabels) == 0):
+            print(f"Invalid type: {midoType}")
+            return
+        dataPoints = [ int(this.editInputs[i].get()) for i in range(len(dataPointLabels)) ]
+        data = dict(zip(dataPointLabels, dataPoints))
+        data["type"] = midoType
+        if (data.get("channel") is not None):
+            data["channel"] -= 1
+        msg = mido.Message(**data)
+        this.midi.setButtonMessage(this.editingButton, msg)
+        this.editPopup.withdraw()
 
 if __name__ == "__main__":
-    gui()
+    gui = gui()

@@ -1,8 +1,54 @@
 {
+    "supported_languages": {
+        "English": "en",
+        "Spanish": "es"
+    },
     "Quit": {
-        "en": "Quit"
+        "en": "Quit",
+        "es": "Salir"
     },
     "Virtual Midi Controller": {
-        "en": "Virtual Midi Controller"
+        "en": "Virtual Midi Controller",
+        "es": "Controlador Midi Virtual"
+    },
+    "Window": {
+        "en": "Window",
+        "es": "Ventana"
+    },
+    "Column Count": {
+        "en": "Column Count",
+        "es": "Número de Columnas"
+    },
+    "Row Count": {
+        "en": "Row Count",
+        "es": "Número de Filas"
+    },
+    "Prefered Language": {
+        "en": "Prefered Language",
+        "es": "Idioma Preferido"
+    },
+    "Preferences": {
+        "en": "Preferences",
+        "es": "Preferencias"
+    },
+    "Channel (1-16)": {
+        "en": "Channel (1-16)",
+        "es": "Canal (1-16)"
+    },
+    "Type of Midi Message": {
+        "en": "Midi Message Type",
+        "es": "Tipo de Mensaje Midi"
+    },
+    "Select Midi Message": {
+        "en": "Select Midi Message",
+        "es": "Seleccionar Mensaje Midi"
+    },
+    "Edit Midi Message": {
+        "en": "Edit Midi Message",
+        "es": "Editar Mensaje Midi"
+    },
+    "Channel Name": {
+        "en": "Channel Name",
+        "es": "Nombre del Canal"
     }
 }
