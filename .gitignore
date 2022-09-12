@@ -2,6 +2,7 @@
 settings.json
 log.txt
 .vscode
+.DS_Store
 
 ### Github's Python template
 

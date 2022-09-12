@@ -17,11 +17,11 @@
     },
     "Column Count": {
         "en": "Column Count",
-        "es": "Número de Columnas"
+        "es": "N\u00famero de Columnas"
     },
     "Row Count": {
         "en": "Row Count",
-        "es": "Número de Filas"
+        "es": "N\u00famero de Filas"
     },
     "Prefered Language": {
         "en": "Prefered Language",
@@ -50,5 +50,53 @@
     "Channel Name": {
         "en": "Channel Name",
         "es": "Nombre del Canal"
+    },
+    "Channel": {
+        "en": "Channel",
+        "es": "Canal"
+    },
+    "Control": {
+        "en": "Control",
+        "es": "Control"
+    },
+    "Value": {
+        "en": "Value",
+        "es": "Valor"
+    },
+    "Save": {
+        "en": "Save",
+        "es": "Guardar"
+    },
+    "Cancel": {
+        "en": "Cancel",
+        "es": "Cancelar"
+    },
+    "Program": {
+        "en": "Program",
+        "es": "Programa"
+    },
+    "Note": {
+        "en": "Note",
+        "es": "Nota"
+    },
+    "Velocity": {
+        "en": "Velocity",
+        "es": "Velocidad"
+    },
+    "Data": {
+        "en": "Data",
+        "es": "Datos"
+    },
+    "Type": {
+        "en": "Type",
+        "es": "Tipo"
+    },
+    "Pos": {
+        "en": "Pos",
+        "es": "Pos"
+    },
+    "Song": {
+        "en": "Song",
+        "es": "Canci\u00f3n"
     }
 }

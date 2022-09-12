@@ -1,8 +1,9 @@
 from json import loads
-import tkinter as tk
+import helper
 import midi
 import mido
-import helper
+import sys
+import tkinter as tk
 
 class gui:
     """When initialized, this class will create a window for the user to interact with.
@@ -98,7 +99,10 @@ class gui:
                 buttonId = len(this.buttons)
                 this.buttons.append(tk.Button(this.mainFrame, text=this.getButtonText(buttonId), command=lambda button=buttonId: this.buttonPress(button), height=5, width=10))
                 this.buttons[-1].grid(row=i, column=j, sticky="nsew", padx=5, pady=5)
-                this.buttons[-1].bind("<Button-3>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
+                if (sys.platform == "darwin"):
+                    this.buttons[-1].bind("<Button-2>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
+                else:
+                    this.buttons[-1].bind("<Button-3>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
 
     def buttonPress(this, button: int):
         """Function called when a button is pressed.
@@ -109,7 +113,6 @@ class gui:
         message = this.midi.getButtonMessage(button)
         if (message is None):
             return
-        print(f"Sending message: {message} from button {this.getButtonText(button)}")
         this.midi.send(message)
 
     def getButtonText(this, button: int) -> str:

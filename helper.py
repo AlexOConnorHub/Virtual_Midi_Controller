@@ -10,6 +10,17 @@ def log(str: str) -> None:
     """
     timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S - ")
     open("log.txt", "a").write(f"{timestamp} {str}\n")
+    
+def addString(str: str) -> None:
+    """Adds string to translation file. This is only useful for developers.
+
+    Args:
+        str (str): English string
+    """
+    strings = loads(open("translation.json", "r").read())
+    if (str not in strings):
+        strings[str] = { "en": str }
+        open("translation.json", "w").write(dumps(strings, indent=4))
 
 def getString(str: str, returnNoneOnError: bool = False) -> str:
     """Gets a string from the translation file.
@@ -32,21 +43,11 @@ def getString(str: str, returnNoneOnError: bool = False) -> str:
     if ((str in strings) and (localLanguage in strings[str])):
         return strings[str][localLanguage]
     log(f"String '{str}' not found in translation.json")
+    addString(str)
     if (returnNoneOnError): 
         return None
     else:
         return str
-    
-def addString(str: str) -> None:
-    """Adds string to translation file. This is only useful for developers.
-
-    Args:
-        str (str): English string
-    """
-    strings = loads(open("translation.json", "r").read())
-    if (str not in strings):
-        strings[str] = { "en": str }
-        open("translation.json", "w").write(dumps(strings, indent=4))
 
 def getSetting(str: str) -> str:
     """Gets a setting from settings.json
