@@ -1,7 +1,7 @@
 import helper
 import midi
 import mido
-import sys
+from sys import platform
 import tkinter as tk
 from translation_strings import translated_strings as ts
 
@@ -99,7 +99,7 @@ class gui:
                 buttonId = len(this.buttons)
                 this.buttons.append(tk.Button(this.mainFrame, text=this.getButtonText(buttonId), command=lambda button=buttonId: this.buttonPress(button), height=5, width=10))
                 this.buttons[-1].grid(row=i, column=j, sticky="nsew", padx=5, pady=5)
-                if (sys.platform == "darwin"):
+                if (platform == "darwin"):
                     this.buttons[-1].bind("<Button-2>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
                 else:
                     this.buttons[-1].bind("<Button-3>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
@@ -238,8 +238,8 @@ class gui:
         if (midoType == "sysex"):
             data = {"type": midoType, "data": this.editInputs[0].get()}
         else:
-            dataPointLabels = midi.TYPES.get(midoType, [])
-            if (len(dataPointLabels) == 0):
+            dataPointLabels = midi.TYPES.get(midoType)
+            if (dataPointLabels is None):
                 print(f"Invalid type: {midoType}")
                 return
             dataPoints = [ int(this.editInputs[i].get()) for i in range(len(dataPointLabels)) ]
