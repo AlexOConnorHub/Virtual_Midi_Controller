@@ -1,9 +1,9 @@
-from json import loads
 import helper
 import midi
 import mido
 import sys
 import tkinter as tk
+from translation_strings import translated_strings as ts
 
 class gui:
     """When initialized, this class will create a window for the user to interact with.
@@ -34,7 +34,7 @@ class gui:
         this.preferencesPopup.withdraw()
         this.languageDropdownVar = tk.StringVar(this.preferencesPopup)
         this.languageDropdownVar.set(helper.getSetting("language"))
-        this.languages = loads(open("translation.json", "r").read())["supported_languages"]
+        this.languages = ts["supported_languages"]
         this.preferencesLanguageDropdown = tk.OptionMenu(this.preferencesPopup, this.languageDropdownVar, *list(this.languages.keys()), command=this.dropdownCallbackSetting)
         this.preferencesLanguageDropdown.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         this.preferencesLanguageLabel = tk.Label(this.preferencesPopup)
@@ -182,14 +182,21 @@ class gui:
         inputs = midi.TYPES.get(value.lower(), [])
         nextRow = 2 # Rows 0 and 1 are always used
         for input in inputs:
-            this.editInputs.append(tk.Spinbox(this.editPopup, from_=(1 if input == "channel" else 0), to=(16 if input == "channel" else 127)))
-            this.editInputs[-1].grid(row=nextRow, column=0, sticky="nsew", padx=5, pady=5)
-            if (currMidi is not None):
-                data = getattr(currMidi, input, 0)
-                if (input == "channel"):
-                    data += 1
-                this.editInputs[-1].delete(0, tk.END)
-                this.editInputs[-1].insert(0, data)
+            if (input == "data"):
+                # Input textbox
+                this.editInputs.append(tk.Entry(this.editPopup))
+                this.editInputs[-1].grid(row=nextRow, column=0, sticky="w")
+                this.editInputLabels.append(tk.Label(this.editPopup, text=helper.getString("Data")))
+                this.editInputLabels[-1].grid(row=nextRow, column=1, sticky="w")
+            else:
+                this.editInputs.append(tk.Spinbox(this.editPopup, from_=(1 if input == "channel" else 0), to=(16 if input == "channel" else 127)))
+                this.editInputs[-1].grid(row=nextRow, column=0, sticky="nsew", padx=5, pady=5)
+                if (currMidi is not None):
+                    data = getattr(currMidi, input, 0)
+                    if (input == "channel"):
+                        data += 1
+                    this.editInputs[-1].delete(0, tk.END)
+                    this.editInputs[-1].insert(0, data)
             # this.editInputs[-1].bind("<Key>", lambda e: "break") # This disables keyboard input on the spinbox
             this.editInputLabels.append(tk.Label(this.editPopup, text=helper.getString(input.capitalize())))
             this.editInputLabels[-1].grid(row=nextRow, column=1, sticky="nsew", padx=5, pady=5)
@@ -224,21 +231,24 @@ class gui:
     def saveEdit(this):
         """Saves the edit.
         """
+        this.editPopup.withdraw()
         saveName = this.editChannelLabel.get()
         this.setButtonText(this.editingButton, saveName)
         midoType = this.editDropdownVar.get().lower()
-        dataPointLabels = midi.TYPES.get(midoType, [])
-        if (len(dataPointLabels) == 0):
-            print(f"Invalid type: {midoType}")
-            return
-        dataPoints = [ int(this.editInputs[i].get()) for i in range(len(dataPointLabels)) ]
-        data = dict(zip(dataPointLabels, dataPoints))
-        data["type"] = midoType
-        if (data.get("channel") is not None):
-            data["channel"] -= 1
+        if (midoType == "sysex"):
+            data = {"type": midoType, "data": this.editInputs[0].get()}
+        else:
+            dataPointLabels = midi.TYPES.get(midoType, [])
+            if (len(dataPointLabels) == 0):
+                print(f"Invalid type: {midoType}")
+                return
+            dataPoints = [ int(this.editInputs[i].get()) for i in range(len(dataPointLabels)) ]
+            data = dict(zip(dataPointLabels, dataPoints))
+            data["type"] = midoType
+            if (data.get("channel") is not None):
+                data["channel"] -= 1
         msg = mido.Message(**data)
         this.midi.setButtonMessage(this.editingButton, msg)
-        this.editPopup.withdraw()
 
 if __name__ == "__main__":
     gui = gui()

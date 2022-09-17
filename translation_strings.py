@@ -1,4 +1,4 @@
-{
+translated_strings = {
     "supported_languages": {
         "English": "en",
         "Spanish": "es"
@@ -75,6 +75,10 @@
         "en": "Program",
         "es": "Programa"
     },
+    "Pitch": {
+        "en": "Pitch",
+        "es": "Pitch"
+    },
     "Note": {
         "en": "Note",
         "es": "Nota"
@@ -98,5 +102,13 @@
     "Song": {
         "en": "Song",
         "es": "Canci\u00f3n"
+    },
+    "Frame_type": {
+        "en": "Frame Type",
+        "es": "Tipo de Frame"
+    },
+    "Frame_value": {
+        "en": "Frame Value",
+        "es": "Valor de Frame"
     }
 }

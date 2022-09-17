@@ -1,19 +1,17 @@
 import helper
 import mido
 import mido.backends.rtmidi
-from json import loads, dumps
-
 
 TYPES = {
     "note_on": ["channel", "note", "velocity"],
     "note_off": ["channel", "note", "velocity"],
-    "plytouch": ["channel", "note", "value"],
+    "polytouch": ["channel", "note", "value"],
     "control_change": ["channel", "control", "value"],
     "program_change": ["channel", "program"],
     "aftertouch": ["channel", "value"],
     "pitchwheel": ["channel", "pitch"],
     "sysex": ["data"],
-    "quarter_frame": ["type", "value"],
+    "quarter_frame": ["frame_type", "frame_value"],
     "songpos": ["pos"],
     "song_select": ["song"],
     "tune_request": [],
