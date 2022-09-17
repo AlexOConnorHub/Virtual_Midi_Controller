@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import helper
 import midi
 import mido
@@ -11,7 +12,6 @@ class gui:
     def __init__(this):
         this.midi = midi.midi()
         this.root = tk.Tk()
-
         # Right click on control edit popup
         this.editPopup = tk.Toplevel(this.root)
         this.editPopup.protocol("WM_DELETE_WINDOW", this.editPopup.withdraw)
@@ -21,7 +21,7 @@ class gui:
         this.editChannelLabelLabel = tk.Label(this.editPopup)
         this.editChannelLabelLabel.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
         this.editDropdownVar = tk.StringVar(this.editPopup)
-        this.editDropdown = tk.OptionMenu(this.editPopup, this.editDropdownVar, *[key.capitalize() for key in midi.TYPES.keys()], command=this.dropdownCallbackEdit)
+        this.editDropdown = tk.OptionMenu(this.editPopup, this.editDropdownVar, *[key.capitalize().replace("_", " ") for key in midi.TYPES.keys()], command=this.dropdownCallbackEdit)
         this.editDropdown.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
         this.editDropdownLabel = tk.Label(this.editPopup)
         this.editDropdownLabel.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
@@ -99,6 +99,7 @@ class gui:
                 buttonId = len(this.buttons)
                 this.buttons.append(tk.Button(this.mainFrame, text=this.getButtonText(buttonId), command=lambda button=buttonId: this.buttonPress(button), height=5, width=10))
                 this.buttons[-1].grid(row=i, column=j, sticky="nsew", padx=5, pady=5)
+                this.buttons[-1].bind("<ButtonRelease-1>", lambda e, id=buttonId: this.releaseButton(e, id))
                 if (platform == "darwin"):
                     this.buttons[-1].bind("<Button-2>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
                 else:
@@ -114,6 +115,19 @@ class gui:
         if (message is None):
             return
         this.midi.send(message)
+        
+    def releaseButton(this, e, button: int):
+        """Function called when a button is released.
+
+        Args:
+            e (tk.Event): Event
+            button (int): Button ID
+        """
+        message = this.midi.getButtonMessage(button)
+        if (message is None):
+            return
+        if (message.type == "note_on"):
+            this.midi.send(this.midi.getNoteOffMessage(message))
 
     def getButtonText(this, button: int) -> str:
         """Gets the text for the button.
@@ -159,16 +173,18 @@ class gui:
         this.editChannelLabel.delete(0, tk.END)
         this.editChannelLabel.insert(0, this.getButtonText(button))
         currMidi = this.midi.getButtonMessage(button)
-        if (currMidi is None):
-            this.dropdownCallbackEdit("")
-        else:
-            this.editDropdownVar.set(currMidi.type)
-            this.dropdownCallbackEdit(currMidi.type)
+        if (currMidi is not None):
+            currMidiType = currMidi.type
+            if (currMidiType == "note_on"):
+                this.editDropdownVar.set("Note")
+            else:
+                this.editDropdownVar.set(currMidiType.capitalize().replace("_", " "))
+        this.dropdownCallbackEdit(this.editDropdownVar.get())
         this.editPopup.deiconify()
 
-    def dropdownCallbackEdit(this, value):
+    def dropdownCallbackEdit(this, value:str) -> None:
         """Handles dropdown menu.
-
+        
         Args:
             value (str): Value of the dropdown menu
         """
@@ -179,7 +195,10 @@ class gui:
         this.editInputs = []
         this.editInputLabels = []
         currMidi = this.midi.getButtonMessage(this.editingButton)
-        inputs = midi.TYPES.get(value.lower(), [])
+        value = value.lower().replace(" ", "_")
+        if (value == "Note"):
+            value = "note_on"
+        inputs = midi.TYPES.get(value, [])
         nextRow = 2 # Rows 0 and 1 are always used
         for input in inputs:
             if (input == "data"):
@@ -234,7 +253,7 @@ class gui:
         this.editPopup.withdraw()
         saveName = this.editChannelLabel.get()
         this.setButtonText(this.editingButton, saveName)
-        midoType = this.editDropdownVar.get().lower()
+        midoType = this.editDropdownVar.get().lower().replace(" ", "_")
         if (midoType == "sysex"):
             data = {"type": midoType, "data": this.editInputs[0].get()}
         else:
@@ -244,7 +263,7 @@ class gui:
                 return
             dataPoints = [ int(this.editInputs[i].get()) for i in range(len(dataPointLabels)) ]
             data = dict(zip(dataPointLabels, dataPoints))
-            data["type"] = midoType
+            data["type"] = midoType if (midoType != "note") else "note_on"
             if (data.get("channel") is not None):
                 data["channel"] -= 1
         msg = mido.Message(**data)

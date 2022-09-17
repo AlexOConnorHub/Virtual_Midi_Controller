@@ -3,8 +3,9 @@ import mido
 import mido.backends.rtmidi
 
 TYPES = {
-    "note_on": ["channel", "note", "velocity"],
-    "note_off": ["channel", "note", "velocity"],
+    "note": ["channel", "note", "velocity"],
+    # "note_on": ["channel", "note", "velocity"],
+    # "note_off": ["channel", "note", "velocity"],
     "polytouch": ["channel", "note", "value"],
     "control_change": ["channel", "control", "value"],
     "program_change": ["channel", "program"],
@@ -65,6 +66,9 @@ class midi:
         buttonSettings = helper.getSetting("buttons")
         buttonSettings[button]["command"] = contents.dict()
         helper.setSetting("buttons", buttonSettings)
+        
+    def getNoteOffMessage(this, message: mido.Message) -> mido.Message:
+        return mido.Message("note_off", note=message.note, velocity=message.velocity, channel=message.channel)
 
 if __name__ == "__main__":
     import doctest
