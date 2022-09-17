@@ -20,8 +20,12 @@ def getString(str: str, returnNoneOnError: bool = False) -> str:
         localLanguage = ts.get("supported_languages")[localLanguage]
     else:
         localLanguage = "en"
-    if ((str in ts) and (localLanguage in ts[str])):
-        return ts[str][localLanguage]
+    if ((str in ts)):
+        if (localLanguage in ts[str]):
+            return ts[str][localLanguage]
+        elif ("en" in ts[str]):
+            print(f"String '{str}' not translated to {localLanguage} in translation_strings.py")
+            return ts[str]["en"]
     print(f"String '{str}' not found in translation_strings.py")
     if (returnNoneOnError): 
         return None

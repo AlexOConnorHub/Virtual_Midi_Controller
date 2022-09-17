@@ -4,6 +4,7 @@ import midi
 import mido
 from sys import platform
 import tkinter as tk
+from tkinter import messagebox
 from translation_strings import translated_strings as ts
 
 class gui:
@@ -58,7 +59,9 @@ class gui:
         this.optionBar = tk.Menu(this.root)
         this.editMenu = tk.Menu(this.optionBar, tearoff=0)
         this.editMenu.add_command(command=this.preferencesPopup.deiconify)
+        this.editMenu.add_command(command=lambda :  messagebox.showinfo(title=helper.getString("About"), message=helper.getString("About Message")))
         this.editMenu.add_command(command=this.root.quit)
+        # 
         this.optionBar.add_cascade(menu=this.editMenu)
         this.root.config(menu=this.optionBar)
 
@@ -82,7 +85,8 @@ class gui:
         this.preferencesRowCountLabel.config(text=helper.getString("Row Count"))
         this.preferencesColumnCountLabel.config(text=helper.getString("Column Count"))
         this.editMenu.entryconfig(0, label = helper.getString("Preferences"))
-        this.editMenu.entryconfig(1, label = helper.getString("Quit"))
+        this.editMenu.entryconfig(1, label = helper.getString("About"))
+        this.editMenu.entryconfig(2, label = helper.getString("Quit"))
         this.optionBar.entryconfig(1, label = helper.getString("Window"))
 
     def renderMainWindow(this) -> None:
