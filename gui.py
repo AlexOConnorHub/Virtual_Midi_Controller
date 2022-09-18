@@ -100,18 +100,20 @@ class gui:
         for i in range(row):
             for j in range(col):
                 buttonId = len(this.buttons)
-                this.buttons.append(tk.Button(this.mainFrame, text=this.getButtonText(buttonId), command=lambda button=buttonId: this.buttonPress(button), height=5, width=10))
+                this.buttons.append(tk.Button(this.mainFrame, text=this.getButtonText(buttonId), height=5, width=10))
                 this.buttons[-1].grid(row=i, column=j, sticky="nsew", padx=5, pady=5)
+                this.buttons[-1].bind("<Button-1>", lambda e, button=buttonId: this.buttonPress(e, button))
                 this.buttons[-1].bind("<ButtonRelease-1>", lambda e, id=buttonId: this.releaseButton(e, id))
                 if (platform == "darwin"):
                     this.buttons[-1].bind("<Button-2>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
                 else:
                     this.buttons[-1].bind("<Button-3>", lambda e, id=buttonId: this.eventRightClickMenu(e, id))
 
-    def buttonPress(this, button: int):
+    def buttonPress(this, e, button: int):
         """Function called when a button is pressed.
 
         Args:
+            e (tk.Event): Event
             button (int): Button ID
         """
         message = this.midi.getButtonMessage(button)
@@ -258,7 +260,7 @@ class gui:
         this.setButtonText(this.editingButton, saveName)
         midoType = this.editDropdownVar.get().lower().replace(" ", "_")
         if (midoType == "sysex"):
-            data = {"type": midoType, "data": this.editInputs[0].get()}
+            data = {"type": midoType, "data": [int(x) for x in this.editInputs[0].get().split(" ")]}
         else:
             dataPointLabels = midi.TYPES.get(midoType)
             if (dataPointLabels is None):

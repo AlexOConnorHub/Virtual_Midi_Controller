@@ -40,6 +40,7 @@ class midi:
         Args:
             message (mido.Message): Message being sent
         """
+        print("Sending message: " + str(message.dict()))
         this.output.send(message)
         
     def getButtonMessage(this, button: int) -> mido.Message:
